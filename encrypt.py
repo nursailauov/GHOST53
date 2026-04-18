@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 import re
 import json
@@ -1483,8 +1484,24 @@ def ChEck_Limit(Uid, STaTus):
     )
 
 
-f = "blacklist.txt"
-approvee = "approved.txt"
+def _select_runtime_file(filename):
+    source_path = os.path.join(os.path.dirname(__file__), filename)
+    source_dir = os.path.dirname(source_path)
+
+    if os.access(source_dir, os.W_OK):
+        return source_path
+
+    fallback_path = os.path.join("/tmp", filename)
+    if not os.path.exists(fallback_path) and os.path.exists(source_path):
+        try:
+            shutil.copy(source_path, fallback_path)
+        except Exception:
+            pass
+    return fallback_path
+
+
+f = _select_runtime_file("blacklist.txt")
+approvee = _select_runtime_file("approved.txt")
 black, approve = [], []
 
 
@@ -1510,10 +1527,6 @@ def encrypt_uids():
         load_blacklist()
 
 
-if not black:
-    open(f, "w").close()
-
-
 def load_approve():
     global approve
     try:
@@ -1536,13 +1549,12 @@ def encrypt_uids2():
         load_approve()
 
 
-if not approve:
-    open(approvee, "w").close()
-
-
 def Add_Uid(user_id):
-    with open(f, "r") as file:
-        lines = file.read().splitlines()
+    try:
+        with open(f, "r") as file:
+            lines = file.read().splitlines()
+    except FileNotFoundError:
+        lines = []
     if str(user_id) not in lines:
         with open(f, "a") as file:
             file.write(f"{user_id}\n")
@@ -1561,8 +1573,11 @@ def Remove_Uid(f, player_uid):
 
 
 def A(user_id):
-    with open(approvee, "r") as file:
-        lines = file.read().splitlines()
+    try:
+        with open(approvee, "r") as file:
+            lines = file.read().splitlines()
+    except FileNotFoundError:
+        lines = []
     if str(user_id) not in lines:
         with open(approvee, "a") as file:
             file.write(f"{user_id}\n")
