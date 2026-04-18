@@ -26,6 +26,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 app = Flask(__name__)
 clients = {}
 shutting_down = False
+clients_bootstrap_attempted = False
+clients_bootstrap_lock = threading.Lock()
 
 def parse_ghost_names(ghost_names_param):
     """Parse ghost names from either {name1}{name2} or comma-separated list"""
@@ -578,6 +580,37 @@ def load_accounts(file_path):
     with open(file_path, "r") as file:
         return json.load(file)
 
+
+def bootstrap_clients_once():
+    global clients_bootstrap_attempted
+
+    if clients or clients_bootstrap_attempted or shutting_down:
+        return
+
+    with clients_bootstrap_lock:
+        if clients or clients_bootstrap_attempted or shutting_down:
+            return
+
+        clients_bootstrap_attempted = True
+        accounts_path = os.path.join(os.path.dirname(__file__), "accounts.json")
+
+        try:
+            accounts = load_accounts(accounts_path)
+        except FileNotFoundError:
+            print("No accounts file found. Starting without preloaded accounts.")
+            return
+        except Exception as e:
+            print(f"Failed to load accounts from {accounts_path}: {e}")
+            return
+
+        for account_id, password in accounts.items():
+            if account_id in clients:
+                continue
+            client = TcpBotConnectMain(account_id, password)
+            clients[account_id] = client
+            threading.Thread(target=client.run, daemon=True).start()
+            time.sleep(0.2)
+
 def cleanup():
     global shutting_down
     shutting_down = True
@@ -667,10 +700,12 @@ def execute_command():
 
 @app.route("/list_clients", methods=["GET"])
 def list_clients():
+    bootstrap_clients_once()
     return jsonify({"clients": list(clients.keys())}), 200
 
 @app.route("/execute_command_all", methods=["GET"])
 def execute_command_all():
+    bootstrap_clients_once()
     if shutting_down:
         return jsonify({"error": "Server is shutting down"}), 503
 
@@ -720,6 +755,7 @@ def execute_command_all():
 
 @app.route("/ghost_all", methods=["GET"])
 def ghost_all():
+    bootstrap_clients_once()
     if shutting_down:
         return jsonify({"error": "Server is shutting down"}), 503
 
@@ -752,6 +788,7 @@ def ghost_all():
 
 @app.route("/ghost", methods=["GET"])
 def ghost():
+    bootstrap_clients_once()
     if shutting_down:
         return jsonify({"error": "Server is shutting down"}), 503
 
@@ -766,7 +803,7 @@ def ghost():
 
     # pick FIRST available client only
     if not clients:
-        return jsonify({"error": "No clients available"}), 500
+        return jsonify({"error": "No clients available. Add accounts in accounts.json or start one with /start_client."}), 503
 
     account_id, client = next(iter(sorted(clients.items(), key=lambda x: int(x[0]))))
 
@@ -795,15 +832,7 @@ if __name__ == "__main__":
     atexit.register(cleanup)
 
     if os.getenv("RENDER") != "true":
-        try:
-            accounts = load_accounts("accounts.json")
-            for account_id, password in accounts.items():
-                client = TcpBotConnectMain(account_id, password)
-                clients[account_id] = client
-                threading.Thread(target=client.run, daemon=True).start()
-                time.sleep(2)
-        except FileNotFoundError:
-            print("No accounts file found. Starting without preloaded accounts.")
+        bootstrap_clients_once()
 
     port = int(os.environ.get("PORT", 5000))
 
