@@ -173,6 +173,11 @@
       font-size: .82rem;
       line-height: 1.4;
     }
+    .name-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
 
     .status { min-height: 20px; margin-top: 10px; color: var(--muted); }
     .status.ok { color: var(--ok); font-weight: 700; text-shadow: 0 0 10px rgba(68, 244, 159, 0.25); }
@@ -332,7 +337,7 @@
       .panel { padding: 14px; border-radius: 16px; }
       .tabs { border-radius: 16px; }
       .tab { font-size: .72rem; padding: 11px 8px; }
-      .stats-grid, .token-grid, .socials { grid-template-columns: 1fr; }
+      .stats-grid, .token-grid, .socials, .name-row { grid-template-columns: 1fr; }
       .profile { grid-template-columns: 1fr; text-align: center; }
       .social-profile { grid-template-columns: 1fr; text-align: center; }
       .social-avatar-wrap { margin: 0 auto; }
@@ -388,7 +393,14 @@
           </div>
         </div>
 
-        <textarea id="ghost_names" placeholder="4) Имя (или список через запятую/с новой строки)"></textarea>
+        <div id="namesSingleWrap">
+          <input id="ghost_names_single" type="text" placeholder="4) Имя">
+        </div>
+        <div id="namesMultiWrap" class="name-row hidden">
+          <input id="ghost_name_1" type="text" placeholder="Имя #1">
+          <input id="ghost_name_2" type="text" placeholder="Имя #2">
+          <input id="ghost_name_3" type="text" placeholder="Имя #3">
+        </div>
         <div id="nameHint" class="hint">Для одного аккаунта: одно имя. Для всех аккаунтов: можно дать каждому своё имя через запятую или с новой строки.</div>
         <button class="btn" type="submit">Отправить ghost</button>
       </form>
@@ -574,7 +586,12 @@
       const teamcode = document.getElementById('teamcode').value.trim();
       const mode = document.querySelector('input[name=\"target_mode\"]:checked').value;
       const nameMode = document.querySelector('input[name=\"name_mode\"]:checked').value;
-      const ghostNames = document.getElementById('ghost_names').value.trim();
+      const singleNameValue = document.getElementById('ghost_names_single').value.trim();
+      const multiNameValues = [
+        document.getElementById('ghost_name_1').value.trim(),
+        document.getElementById('ghost_name_2').value.trim(),
+        document.getElementById('ghost_name_3').value.trim(),
+      ].filter(Boolean);
 
       if (!teamcode) {
         setStatus('Введите TEAM CODE', 'err');
@@ -587,15 +604,14 @@
       try {
         const params = new URLSearchParams({ teamcode });
         const endpoint = mode === 'single' ? '/ghost' : '/ghost_all';
-        if (ghostNames) {
-          if (mode === 'single') {
-            params.set('ghost_name', ghostNames.split(/[,\n]/).map(v => v.trim()).filter(Boolean)[0] || ghostNames);
+        if (mode === 'single') {
+          if (singleNameValue) params.set('ghost_name', singleNameValue);
+        } else {
+          if (nameMode === 'single_name') {
+            if (singleNameValue) params.set('ghost_names', singleNameValue);
           } else {
-            const cleanedList = ghostNames.split(/[,\n]/).map(v => v.trim()).filter(Boolean);
-            const cleaned = nameMode === 'single_name'
-              ? (cleanedList[0] || '')
-              : cleanedList.join(',');
-            if (cleaned) params.set('ghost_names', cleaned);
+            const joined = multiNameValues.join(',');
+            if (joined) params.set('ghost_names', joined);
           }
         }
         const response = await fetch(`${endpoint}?${params.toString()}`);
@@ -657,7 +673,9 @@
     const targetInputs = document.querySelectorAll('input[name="target_mode"]');
     const nameModeInputs = document.querySelectorAll('input[name="name_mode"]');
     const nameModeGroup = document.getElementById('nameModeGroup');
-    const ghostNamesInput = document.getElementById('ghost_names');
+    const namesSingleWrap = document.getElementById('namesSingleWrap');
+    const namesMultiWrap = document.getElementById('namesMultiWrap');
+    const singleNameInput = document.getElementById('ghost_names_single');
     const nameHint = document.getElementById('nameHint');
     function syncModes() {
       const mode = document.querySelector('input[name="target_mode"]:checked').value;
@@ -665,16 +683,17 @@
       const disabled = mode === 'single';
       nameModeGroup.style.opacity = disabled ? '0.55' : '1';
       nameModeGroup.style.pointerEvents = disabled ? 'none' : 'auto';
-      ghostNamesInput.placeholder = disabled
+      const useMulti = !disabled && nameMode === 'multi_name';
+      namesSingleWrap.classList.toggle('hidden', useMulti);
+      namesMultiWrap.classList.toggle('hidden', !useMulti);
+      singleNameInput.placeholder = disabled
         ? '4) Имя для 1 аккаунта'
-        : (nameMode === 'single_name'
-          ? '4) Одно имя для всех аккаунтов'
-          : '4) Разные имена: по одному через запятую или с новой строки');
+        : '4) Одно имя для всех аккаунтов';
       nameHint.textContent = disabled
         ? 'Будет использовано только одно имя для одного аккаунта.'
         : (nameMode === 'single_name'
           ? 'Одно имя будет применено ко всем аккаунтам.'
-          : 'Каждый аккаунт получит своё имя по порядку из списка.');
+          : 'Каждый аккаунт получит имя из полей #1, #2, #3 по порядку.');
     }
     targetInputs.forEach((el) => el.addEventListener('change', syncModes));
     nameModeInputs.forEach((el) => el.addEventListener('change', syncModes));
