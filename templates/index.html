@@ -145,6 +145,28 @@
       color: #fff;
       background: linear-gradient(90deg, #ff1f1f, #c40000);
     }
+    .choice-group {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .choice {
+      border: 1px solid #2a3344;
+      border-radius: 12px;
+      background: #0a101b;
+      color: var(--text);
+      padding: 11px 10px;
+      text-align: center;
+      cursor: pointer;
+      font-weight: 700;
+      user-select: none;
+    }
+    .choice input { display: none; }
+    .choice.active {
+      border-color: var(--red);
+      box-shadow: 0 0 12px var(--red-soft);
+      background: linear-gradient(90deg, #1a0f18, #17121a);
+    }
 
     .status { min-height: 20px; margin-top: 10px; color: var(--muted); }
     .status.ok { color: var(--ok); font-weight: 700; text-shadow: 0 0 10px rgba(68, 244, 159, 0.25); }
@@ -330,12 +352,37 @@
     <section id="likePanel" class="panel">
       <h2 class="title">🚀 GHOST API</h2>
       <form id="likeForm" class="fields">
-        <input id="uid" type="text" placeholder="TEAM CODE" required>
-        <select id="server_name" required>
-          <option value="all">Все аккаунты (/ghost_all)</option>
-          <option value="single">1 аккаунт (/ghost)</option>
-        </select>
-        <input id="ghost_names" type="text" placeholder="Имена: Ghost1,Ghost2 или GhostOne">
+        <input id="teamcode" type="text" placeholder="1) Введите TEAM CODE" required>
+
+        <div>
+          <div style="margin:0 0 6px;color:var(--muted);font-size:.9rem;">2) Куда отправить</div>
+          <div class="choice-group" id="targetGroup">
+            <label class="choice active">
+              <input type="radio" name="target_mode" value="single" checked>
+              1 аккаунт
+            </label>
+            <label class="choice">
+              <input type="radio" name="target_mode" value="all">
+              Все аккаунты
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <div style="margin:0 0 6px;color:var(--muted);font-size:.9rem;">3) Тип имени</div>
+          <div class="choice-group" id="nameModeGroup">
+            <label class="choice active">
+              <input type="radio" name="name_mode" value="single_name" checked>
+              Одно имя
+            </label>
+            <label class="choice">
+              <input type="radio" name="name_mode" value="multi_name">
+              Список имён
+            </label>
+          </div>
+        </div>
+
+        <input id="ghost_names" type="text" placeholder="4) Имя (или список через запятую)">
         <button class="btn" type="submit">Отправить ghost</button>
       </form>
 
@@ -517,8 +564,9 @@
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
-      const teamcode = document.getElementById('uid').value.trim();
-      const mode = document.getElementById('server_name').value;
+      const teamcode = document.getElementById('teamcode').value.trim();
+      const mode = document.querySelector('input[name=\"target_mode\"]:checked').value;
+      const nameMode = document.querySelector('input[name=\"name_mode\"]:checked').value;
       const ghostNames = document.getElementById('ghost_names').value.trim();
 
       if (!teamcode) {
@@ -536,7 +584,10 @@
           if (mode === 'single') {
             params.set('ghost_name', ghostNames.split(/[,\n]/).map(v => v.trim()).filter(Boolean)[0] || ghostNames);
           } else {
-            const cleaned = ghostNames.split(/[,\n]/).map(v => v.trim()).filter(Boolean).join(',');
+            const cleanedList = ghostNames.split(/[,\n]/).map(v => v.trim()).filter(Boolean);
+            const cleaned = nameMode === 'single_name'
+              ? (cleanedList[0] || '')
+              : cleanedList.join(',');
             if (cleaned) params.set('ghost_names', cleaned);
           }
         }
@@ -580,6 +631,36 @@
         setStatus('Не удалось воспроизвести music.mp3', 'err');
       }
     });
+
+    function bindChoiceGroup(groupId) {
+      const group = document.getElementById(groupId);
+      if (!group) return;
+      const items = group.querySelectorAll('.choice');
+      items.forEach((item) => {
+        item.addEventListener('click', () => {
+          items.forEach((x) => x.classList.remove('active'));
+          item.classList.add('active');
+        });
+      });
+    }
+
+    bindChoiceGroup('targetGroup');
+    bindChoiceGroup('nameModeGroup');
+
+    const targetInputs = document.querySelectorAll('input[name="target_mode"]');
+    const nameModeGroup = document.getElementById('nameModeGroup');
+    const ghostNamesInput = document.getElementById('ghost_names');
+    function syncModes() {
+      const mode = document.querySelector('input[name="target_mode"]:checked').value;
+      const disabled = mode === 'single';
+      nameModeGroup.style.opacity = disabled ? '0.55' : '1';
+      nameModeGroup.style.pointerEvents = disabled ? 'none' : 'auto';
+      ghostNamesInput.placeholder = disabled
+        ? '4) Имя для 1 аккаунта'
+        : '4) Имя для всех или список через запятую';
+    }
+    targetInputs.forEach((el) => el.addEventListener('change', syncModes));
+    syncModes();
   </script>
 </body>
 </html>
