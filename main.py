@@ -588,11 +588,11 @@ def cleanup():
         del clients[account_id]
     print("Cleanup completed")
 
-def preload_clients_once():
+def preload_clients_once(force=False):
     global clients_preloaded
     if clients_preloaded or shutting_down:
         return
-    if os.getenv("RENDER") == "true" or os.getenv("VERCEL") == "1":
+    if not force and (os.getenv("RENDER") == "true" or os.getenv("VERCEL") == "1"):
         return
     try:
         accounts = load_accounts("accounts.json")
@@ -718,6 +718,9 @@ def execute_command_all():
 
     ghost_names_list = parse_ghost_names(ghost_names_param)
 
+    if not clients:
+        preload_clients_once(force=True)
+
     sorted_clients = sorted(clients.items(), key=lambda x: int(x[0]))
 
     results = {}
@@ -755,6 +758,9 @@ def ghost_all():
 
     ghost_names_list = parse_ghost_names(ghost_names_param)
 
+    if not clients:
+        preload_clients_once(force=True)
+
     sorted_clients = sorted(clients.items(), key=lambda x: int(x[0]))
 
     results = {}
@@ -787,6 +793,9 @@ def ghost():
 
     if not ghost_name:
         ghost_name = "Ghost"
+
+    if not clients:
+        preload_clients_once(force=True)
 
     # pick FIRST available client only
     if not clients:
