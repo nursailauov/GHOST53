@@ -683,15 +683,40 @@
     const namesSingleWrap = document.getElementById('namesSingleWrap');
     const namesMultiWrap = document.getElementById('namesMultiWrap');
     const singleNameInput = document.getElementById('ghost_names_single');
+    const multiNameInputs = [
+      document.getElementById('ghost_name_1'),
+      document.getElementById('ghost_name_2'),
+      document.getElementById('ghost_name_3'),
+    ];
     function syncModes() {
       const mode = document.querySelector('input[name="target_mode"]:checked').value;
       const nameMode = document.querySelector('input[name="name_mode"]:checked').value;
-      const disabled = mode === 'single';
-      nameModeGroup.parentElement.classList.toggle('hidden', disabled);
-      const useMulti = !disabled && nameMode === 'multi_name';
-      namesSingleWrap.classList.toggle('hidden', useMulti ? true : false);
-      namesMultiWrap.classList.toggle('hidden', useMulti ? false : true);
-      singleNameInput.placeholder = disabled ? '4) Имя для 1 аккаунта (последние 2 аккаунта рандом)' : '4) Одно имя для первых 3 аккаунтов';
+      const isSingleMode = mode === 'single';
+      const useMulti = !isSingleMode && nameMode === 'multi_name';
+
+      // 1 аккаунт: скрываем "тип имени" и показываем только одно поле
+      if (isSingleMode) {
+        nameModeGroup.parentElement.classList.add('hidden');
+        namesSingleWrap.classList.remove('hidden');
+        namesMultiWrap.classList.add('hidden');
+        singleNameInput.placeholder = '4) Имя для 1 аккаунта (последние 2 аккаунта рандом)';
+      } else {
+        // Все аккаунты: показываем тип имени, а дальше одно поле ИЛИ 3 поля
+        nameModeGroup.parentElement.classList.remove('hidden');
+        if (useMulti) {
+          namesSingleWrap.classList.add('hidden');
+          namesMultiWrap.classList.remove('hidden');
+        } else {
+          namesSingleWrap.classList.remove('hidden');
+          namesMultiWrap.classList.add('hidden');
+        }
+        singleNameInput.placeholder = '4) Одно имя для первых 3 аккаунтов';
+      }
+
+      multiNameInputs.forEach((input) => {
+        input.disabled = !useMulti;
+        if (!useMulti) input.value = '';
+      });
     }
     targetInputs.forEach((el) => el.addEventListener('change', syncModes));
     nameModeInputs.forEach((el) => el.addEventListener('change', syncModes));
