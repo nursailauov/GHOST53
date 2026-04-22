@@ -167,6 +167,12 @@
       box-shadow: 0 0 12px var(--red-soft);
       background: linear-gradient(90deg, #1a0f18, #17121a);
     }
+    .hint {
+      margin-top: 6px;
+      color: #90a0c4;
+      font-size: .82rem;
+      line-height: 1.4;
+    }
 
     .status { min-height: 20px; margin-top: 10px; color: var(--muted); }
     .status.ok { color: var(--ok); font-weight: 700; text-shadow: 0 0 10px rgba(68, 244, 159, 0.25); }
@@ -377,12 +383,13 @@
             </label>
             <label class="choice">
               <input type="radio" name="name_mode" value="multi_name">
-              Список имён
+              Разные имена для каждого аккаунта
             </label>
           </div>
         </div>
 
-        <input id="ghost_names" type="text" placeholder="4) Имя (или список через запятую)">
+        <textarea id="ghost_names" placeholder="4) Имя (или список через запятую/с новой строки)"></textarea>
+        <div id="nameHint" class="hint">Для одного аккаунта: одно имя. Для всех аккаунтов: можно дать каждому своё имя через запятую или с новой строки.</div>
         <button class="btn" type="submit">Отправить ghost</button>
       </form>
 
@@ -648,18 +655,29 @@
     bindChoiceGroup('nameModeGroup');
 
     const targetInputs = document.querySelectorAll('input[name="target_mode"]');
+    const nameModeInputs = document.querySelectorAll('input[name="name_mode"]');
     const nameModeGroup = document.getElementById('nameModeGroup');
     const ghostNamesInput = document.getElementById('ghost_names');
+    const nameHint = document.getElementById('nameHint');
     function syncModes() {
       const mode = document.querySelector('input[name="target_mode"]:checked').value;
+      const nameMode = document.querySelector('input[name="name_mode"]:checked').value;
       const disabled = mode === 'single';
       nameModeGroup.style.opacity = disabled ? '0.55' : '1';
       nameModeGroup.style.pointerEvents = disabled ? 'none' : 'auto';
       ghostNamesInput.placeholder = disabled
         ? '4) Имя для 1 аккаунта'
-        : '4) Имя для всех или список через запятую';
+        : (nameMode === 'single_name'
+          ? '4) Одно имя для всех аккаунтов'
+          : '4) Разные имена: по одному через запятую или с новой строки');
+      nameHint.textContent = disabled
+        ? 'Будет использовано только одно имя для одного аккаунта.'
+        : (nameMode === 'single_name'
+          ? 'Одно имя будет применено ко всем аккаунтам.'
+          : 'Каждый аккаунт получит своё имя по порядку из списка.');
     }
     targetInputs.forEach((el) => el.addEventListener('change', syncModes));
+    nameModeInputs.forEach((el) => el.addEventListener('change', syncModes));
     syncModes();
   </script>
 </body>
