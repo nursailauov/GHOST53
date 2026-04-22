@@ -1511,7 +1511,10 @@ def encrypt_uids():
 
 
 if not black:
-    open(f, "w").close()
+    try:
+        open(f, "w").close()
+    except OSError:
+        pass
 
 
 def load_approve():
@@ -1537,7 +1540,10 @@ def encrypt_uids2():
 
 
 if not approve:
-    open(approvee, "w").close()
+    try:
+        open(approvee, "w").close()
+    except OSError:
+        pass
 
 
 def Add_Uid(user_id):
