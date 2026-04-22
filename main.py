@@ -26,6 +26,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 app = Flask(__name__)
 clients = {}
 shutting_down = False
+clients_preloaded = False
 
 def parse_ghost_names(ghost_names_param):
     """Parse ghost names from either {name1}{name2} or comma-separated list"""
@@ -587,9 +588,32 @@ def cleanup():
         del clients[account_id]
     print("Cleanup completed")
 
+def preload_clients_once():
+    global clients_preloaded
+    if clients_preloaded or shutting_down:
+        return
+    if os.getenv("RENDER") == "true" or os.getenv("VERCEL") == "1":
+        return
+    try:
+        accounts = load_accounts("accounts.json")
+        for account_id, password in accounts.items():
+            if account_id in clients:
+                continue
+            client = TcpBotConnectMain(account_id, password)
+            clients[account_id] = client
+            threading.Thread(target=client.run, daemon=True).start()
+            time.sleep(2)
+        clients_preloaded = True
+    except FileNotFoundError:
+        print("No accounts file found. Starting without preloaded accounts.")
+
 @app.route("/")
 def home():
     return "OK", 200
+
+@app.route("/favicon.ico")
+def favicon():
+    return "", 204
 
 @app.route("/start_client", methods=["GET"])
 def start_client():
@@ -794,16 +818,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, signal_handler)
     atexit.register(cleanup)
 
-    if os.getenv("RENDER") != "true":
-        try:
-            accounts = load_accounts("accounts.json")
-            for account_id, password in accounts.items():
-                client = TcpBotConnectMain(account_id, password)
-                clients[account_id] = client
-                threading.Thread(target=client.run, daemon=True).start()
-                time.sleep(2)
-        except FileNotFoundError:
-            print("No accounts file found. Starting without preloaded accounts.")
+    preload_clients_once()
 
     port = int(os.environ.get("PORT", 5000))
 
