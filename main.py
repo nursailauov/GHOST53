@@ -588,7 +588,7 @@ def cleanup():
         del clients[account_id]
     print("Cleanup completed")
 
-def preload_clients_once(force=False):
+def preload_clients_once(force=False, max_clients=None, startup_delay=0):
     global clients_preloaded
     if clients_preloaded or shutting_down:
         return
@@ -596,13 +596,18 @@ def preload_clients_once(force=False):
         return
     try:
         accounts = load_accounts("accounts.json")
+        loaded_now = 0
         for account_id, password in accounts.items():
             if account_id in clients:
                 continue
             client = TcpBotConnectMain(account_id, password)
             clients[account_id] = client
             threading.Thread(target=client.run, daemon=True).start()
-            time.sleep(2)
+            loaded_now += 1
+            if startup_delay > 0:
+                time.sleep(startup_delay)
+            if max_clients is not None and loaded_now >= max_clients:
+                break
         clients_preloaded = True
     except FileNotFoundError:
         print("No accounts file found. Starting without preloaded accounts.")
@@ -719,7 +724,7 @@ def execute_command_all():
     ghost_names_list = parse_ghost_names(ghost_names_param)
 
     if not clients:
-        preload_clients_once(force=True)
+        preload_clients_once(force=True, startup_delay=0)
 
     sorted_clients = sorted(clients.items(), key=lambda x: int(x[0]))
 
@@ -759,7 +764,7 @@ def ghost_all():
     ghost_names_list = parse_ghost_names(ghost_names_param)
 
     if not clients:
-        preload_clients_once(force=True)
+        preload_clients_once(force=True, startup_delay=0)
 
     sorted_clients = sorted(clients.items(), key=lambda x: int(x[0]))
 
@@ -795,7 +800,7 @@ def ghost():
         ghost_name = "Ghost"
 
     if not clients:
-        preload_clients_once(force=True)
+        preload_clients_once(force=True, max_clients=1, startup_delay=0)
 
     # pick FIRST available client only
     if not clients:
