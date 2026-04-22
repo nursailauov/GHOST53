@@ -145,6 +145,47 @@
       color: #fff;
       background: linear-gradient(90deg, #ff1f1f, #c40000);
     }
+    .choice-group {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .choice {
+      border: 1px solid #2a3344;
+      border-radius: 12px;
+      background: #0a101b;
+      color: var(--text);
+      padding: 11px 10px;
+      text-align: center;
+      cursor: pointer;
+      font-weight: 700;
+      user-select: none;
+    }
+    .choice input { display: none; }
+    .choice.active {
+      border-color: var(--red);
+      box-shadow: 0 0 12px var(--red-soft);
+      background: linear-gradient(90deg, #1a0f18, #17121a);
+    }
+    .hint {
+      margin-top: 6px;
+      color: #90a0c4;
+      font-size: .82rem;
+      line-height: 1.4;
+    }
+    .name-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .section-label {
+      margin: 0 0 6px;
+      color: var(--red);
+      font-size: .85rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+    }
 
     .status { min-height: 20px; margin-top: 10px; color: var(--muted); }
     .status.ok { color: var(--ok); font-weight: 700; text-shadow: 0 0 10px rgba(68, 244, 159, 0.25); }
@@ -215,6 +256,20 @@
 
     .token-box .srv { color: #8da0c7; font-size: .78rem; text-transform: uppercase; }
     .token-box .cnt { margin-top: 5px; font-weight: 900; }
+    .custom-preview {
+      margin-top: 10px;
+      background: rgba(8, 14, 25, 0.75);
+      border: 1px solid #243046;
+      border-radius: 12px;
+      padding: 10px;
+    }
+    .custom-preview .line {
+      color: #65a3ff;
+      font-weight: 800;
+      font-size: 0.95rem;
+      margin: 2px 0;
+      text-transform: uppercase;
+    }
 
     .social-profile {
       display: grid;
@@ -304,7 +359,7 @@
       .panel { padding: 14px; border-radius: 16px; }
       .tabs { border-radius: 16px; }
       .tab { font-size: .72rem; padding: 11px 8px; }
-      .stats-grid, .token-grid, .socials { grid-template-columns: 1fr; }
+      .stats-grid, .token-grid, .socials, .name-row { grid-template-columns: 1fr; }
       .profile { grid-template-columns: 1fr; text-align: center; }
       .social-profile { grid-template-columns: 1fr; text-align: center; }
       .social-avatar-wrap { margin: 0 auto; }
@@ -323,23 +378,59 @@
     </header>
 
     <section class="tabs" aria-label="tabs">
-      <button id="likeTab" class="tab active" type="button">LIKE API</button>
-      <button id="tokenTab" class="tab" type="button">TOKEN INFO</button>
+      <button id="likeTab" class="tab active" type="button">GHOST API</button>
+      <button id="tokenTab" class="tab" type="button">CLIENTS</button>
     </section>
 
     <section id="likePanel" class="panel">
-      <h2 class="title">🚀 LIKE API</h2>
+      <h2 class="title">🚀 GHOST API</h2>
       <form id="likeForm" class="fields">
-        <input id="uid" type="number" placeholder="YOUR UID" required>
-        <select id="server_name" required>
-          <option value="CIS">CIS</option>
-          <option value="BD">BD</option>
-          <option value="BR">BR</option>
-          <option value="US">US</option>
-          <option value="SAC">SAC</option>
-          <option value="NA">NA</option>
-        </select>
-        <button class="btn" type="submit">Отправить лайки</button>
+        <input id="teamcode" type="text" placeholder="1) Введите TEAM CODE" required>
+
+        <div>
+          <div class="section-label">2) Куда отправить</div>
+          <div class="choice-group" id="targetGroup">
+            <label class="choice active">
+              <input type="radio" name="target_mode" value="single" checked>
+              1 аккаунт
+            </label>
+            <label class="choice">
+              <input type="radio" name="target_mode" value="all">
+              Все аккаунты
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label">3) Тип имени</div>
+          <div class="choice-group" id="nameModeGroup">
+            <label class="choice active">
+              <input type="radio" name="name_mode" value="single_name" checked>
+              Одно имя
+            </label>
+            <label class="choice">
+              <input type="radio" name="name_mode" value="multi_name">
+              Разные имена для каждого аккаунта
+            </label>
+          </div>
+        </div>
+
+        <div id="namesSingleWrap">
+          <input id="ghost_names_single" type="text" placeholder="4) Имя">
+        </div>
+        <div id="namesMultiWrap" class="name-row hidden">
+          <input id="ghost_name_1" type="text" placeholder="Имя #1 (1-й аккаунт)">
+          <input id="ghost_name_2" type="text" placeholder="Имя #2 (2-й аккаунт)">
+          <input id="ghost_name_3" type="text" placeholder="Имя #3 (3-й аккаунт)">
+        </div>
+        <div class="section-label">Кастомные подписи панели</div>
+        <input id="customWaitText" type="text" placeholder="Текст таймера, например: >10 МИНУТ">
+        <input id="customModeText" type="text" placeholder="Текст режима, например: РЕЖИМ ТРЕНИРОВКА">
+        <div class="custom-preview">
+          <div class="line" id="customWaitPreview">&gt;5 МИНУТ</div>
+          <div class="line" id="customModePreview">БИТВА ОТРЯДОВ</div>
+        </div>
+        <button class="btn" type="submit">Отправить ghost</button>
       </form>
 
       <div id="status" class="status"></div>
@@ -354,15 +445,15 @@
 
         <div class="stats-grid">
           <div class="stat before">
-            <div class="label">Лайки до</div>
+            <div class="label">Аккаунтов</div>
             <div id="likesBefore" class="val">0</div>
           </div>
           <div class="stat plus">
-            <div class="label">Отправлено</div>
+            <div class="label">Успешно</div>
             <div id="likesGiven" class="val">+0</div>
           </div>
           <div class="stat after">
-            <div class="label">Лайки после</div>
+            <div class="label">Ошибок</div>
             <div id="likesAfter" class="val">0</div>
           </div>
         </div>
@@ -371,10 +462,10 @@
     </section>
 
     <section id="tokenPanel" class="panel hidden">
-      <h2 class="title">🧩 TOKEN INFO</h2>
-      <p style="margin:0;color:var(--muted)">Здесь отображается информация по токенам для серверов.</p>
+      <h2 class="title">🧩 CLIENTS</h2>
+      <p style="margin:0;color:var(--muted)">Список загруженных аккаунтов из /list_clients.</p>
       <div id="tokenGrid" class="token-grid"></div>
-      <pre id="tokenRaw" class="hidden"></pre>
+      <pre id="tokenRaw"></pre>
     </section>
 
     <section class="panel">
@@ -433,6 +524,10 @@
 
     const tokenGrid = document.getElementById('tokenGrid');
     const tokenRaw = document.getElementById('tokenRaw');
+    const customWaitText = document.getElementById('customWaitText');
+    const customModeText = document.getElementById('customModeText');
+    const customWaitPreview = document.getElementById('customWaitPreview');
+    const customModePreview = document.getElementById('customModePreview');
 
     const musicBtn = document.getElementById('musicBtn');
     const bgMusic = document.getElementById('bgMusic');
@@ -462,86 +557,115 @@
       return Number(value || 0).toLocaleString('ru-RU');
     }
 
-    function renderLikeResult(data, fallbackUid) {
-      const uidValue = data.UID || fallbackUid || '-';
-      const nick = data.PlayerNickname && data.PlayerNickname !== 'N/A' ? data.PlayerNickname : 'UNKNOWN PLAYER';
-      const before = Number(data.LikesbeforeCommand || 0);
-      const given = Number(data.LikesGivenByAPI || 0);
-      const after = Number(data.LikesafterCommand || 0);
+    function updateCustomPreview() {
+      const waitText = (customWaitText.value || '>5 МИНУТ').trim();
+      const modeText = (customModeText.value || 'БИТВА ОТРЯДОВ').trim();
+      customWaitPreview.textContent = waitText || '>5 МИНУТ';
+      customModePreview.textContent = modeText || 'БИТВА ОТРЯДОВ';
+      localStorage.setItem('custom_wait_text', customWaitPreview.textContent);
+      localStorage.setItem('custom_mode_text', customModePreview.textContent);
+    }
 
-      nickname.textContent = nick;
-      uidText.textContent = `UID: ${uidValue}`;
-      likesBefore.textContent = formatNum(before);
-      likesGiven.textContent = `${given >= 0 ? '+' : ''}${formatNum(given)}`;
-      likesAfter.textContent = formatNum(after);
+    function renderLikeResult(data, teamcode) {
+      const results = data.results || {};
+      const total = Object.keys(results).length;
+      const okCount = Object.values(results).filter((v) => String(v).toLowerCase().includes('successfully')).length;
+      const errorCount = total - okCount;
+      const modeText = total > 1 ? 'GHOST ALL' : 'GHOST SINGLE';
 
-      const avatarSeed = encodeURIComponent(`${uidValue}-${nick}`);
+      nickname.textContent = modeText;
+      uidText.textContent = `TEAM: ${teamcode || '-'}`;
+      likesBefore.textContent = formatNum(total);
+      likesGiven.textContent = `${okCount >= 0 ? '+' : ''}${formatNum(okCount)}`;
+      likesAfter.textContent = formatNum(errorCount);
+
+      const avatarSeed = encodeURIComponent(`${teamcode}-${modeText}`);
       avatar.src = `https://api.dicebear.com/8.x/adventurer/svg?seed=${avatarSeed}`;
 
       resultCard.classList.remove('hidden');
+      tokenRaw.textContent = JSON.stringify(data, null, 2);
     }
 
     async function loadTokenInfo() {
       tokenGrid.innerHTML = '<div style="color:var(--muted)">Загрузка...</div>';
-      tokenRaw.classList.add('hidden');
 
       try {
-        const response = await fetch('/token_info');
+        const response = await fetch('/list_clients');
         const data = await response.json();
 
         if (!response.ok) {
-          tokenGrid.innerHTML = '<div style="color:var(--warn)">Ошибка загрузки token_info</div>';
+          tokenGrid.innerHTML = '<div style="color:var(--warn)">Ошибка загрузки /list_clients</div>';
           tokenRaw.textContent = JSON.stringify(data, null, 2);
-          tokenRaw.classList.remove('hidden');
           return;
         }
 
         tokenGrid.innerHTML = '';
-        Object.entries(data).forEach(([server, counts]) => {
+        const clients = data.clients || [];
+        clients.forEach((clientId) => {
           const box = document.createElement('div');
           box.className = 'token-box';
           box.innerHTML = `
-            <div class="srv">${server}</div>
-            <div class="cnt">Обычные: ${formatNum(counts.regular_tokens)}</div>
-            <div class="cnt">Visit: ${formatNum(counts.visit_tokens)}</div>
+            <div class="srv">Account</div>
+            <div class="cnt">${clientId}</div>
           `;
           tokenGrid.appendChild(box);
         });
 
+        if (!clients.length) {
+          tokenGrid.innerHTML = '<div style="color:var(--muted)">Нет загруженных аккаунтов.</div>';
+        }
+
         tokenRaw.textContent = JSON.stringify(data, null, 2);
       } catch (error) {
-        tokenGrid.innerHTML = '<div style="color:var(--warn)">Не удалось получить token_info</div>';
+        tokenGrid.innerHTML = '<div style="color:var(--warn)">Не удалось получить /list_clients</div>';
         tokenRaw.textContent = String(error);
-        tokenRaw.classList.remove('hidden');
       }
     }
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
-      const uid = document.getElementById('uid').value.trim();
-      const server = document.getElementById('server_name').value;
+      const teamcode = document.getElementById('teamcode').value.trim();
+      const mode = document.querySelector('input[name=\"target_mode\"]:checked').value;
+      const nameMode = document.querySelector('input[name=\"name_mode\"]:checked').value;
+      const singleNameValue = document.getElementById('ghost_names_single').value.trim();
+      const multiNameValues = [
+        document.getElementById('ghost_name_1').value.trim(),
+        document.getElementById('ghost_name_2').value.trim(),
+        document.getElementById('ghost_name_3').value.trim(),
+      ].filter(Boolean);
 
-      if (!uid) {
-        setStatus('Введите UID', 'err');
+      if (!teamcode) {
+        setStatus('Введите TEAM CODE', 'err');
         return;
       }
 
-      setStatus('Отправка лайков...', '');
+      setStatus('Отправка ghost...', '');
       resultCard.classList.add('hidden');
 
       try {
-        // rotation batch убран: всегда random=true
-        const params = new URLSearchParams({ uid, server_name: server, random: 'true' });
-        const response = await fetch(`/like?${params.toString()}`);
+        const params = new URLSearchParams({ teamcode });
+        const endpoint = mode === 'single' ? '/ghost' : '/ghost_all';
+        if (mode === 'single') {
+          if (singleNameValue) params.set('ghost_name', singleNameValue);
+        } else {
+          if (nameMode === 'single_name') {
+            if (singleNameValue) params.set('ghost_names', singleNameValue);
+          } else {
+            const joined = multiNameValues.join(',');
+            if (joined) params.set('ghost_names', joined);
+          }
+        }
+        const response = await fetch(`${endpoint}?${params.toString()}`);
         const data = await response.json();
 
         if (!response.ok) {
           setStatus(`Ошибка: HTTP ${response.status}`, 'err');
+          tokenRaw.textContent = JSON.stringify(data, null, 2);
           return;
         }
 
-        renderLikeResult(data, uid);
-        setStatus('✅ Лайки отправлены', 'ok');
+        renderLikeResult(data, teamcode);
+        setStatus('✅ Ghost отправлен', 'ok');
       } catch (error) {
         setStatus('Не удалось отправить запрос', 'err');
       }
@@ -571,6 +695,72 @@
         setStatus('Не удалось воспроизвести music.mp3', 'err');
       }
     });
+
+    function bindChoiceGroup(groupId) {
+      const group = document.getElementById(groupId);
+      if (!group) return;
+      const items = group.querySelectorAll('.choice');
+      items.forEach((item) => {
+        item.addEventListener('click', () => {
+          items.forEach((x) => x.classList.remove('active'));
+          item.classList.add('active');
+        });
+      });
+    }
+
+    bindChoiceGroup('targetGroup');
+    bindChoiceGroup('nameModeGroup');
+
+    const targetInputs = document.querySelectorAll('input[name="target_mode"]');
+    const nameModeInputs = document.querySelectorAll('input[name="name_mode"]');
+    const nameModeGroup = document.getElementById('nameModeGroup');
+    const namesSingleWrap = document.getElementById('namesSingleWrap');
+    const namesMultiWrap = document.getElementById('namesMultiWrap');
+    const singleNameInput = document.getElementById('ghost_names_single');
+    const multiNameInputs = [
+      document.getElementById('ghost_name_1'),
+      document.getElementById('ghost_name_2'),
+      document.getElementById('ghost_name_3'),
+    ];
+    function syncModes() {
+      const mode = document.querySelector('input[name="target_mode"]:checked').value;
+      const nameMode = document.querySelector('input[name="name_mode"]:checked').value;
+      const isSingleMode = mode === 'single';
+      const useMulti = !isSingleMode && nameMode === 'multi_name';
+
+      // 1 аккаунт: скрываем "тип имени" и показываем только одно поле
+      if (isSingleMode) {
+        nameModeGroup.parentElement.classList.add('hidden');
+        namesSingleWrap.classList.remove('hidden');
+        namesMultiWrap.classList.add('hidden');
+        singleNameInput.placeholder = '4) Имя для 1 аккаунта (последние 2 аккаунта рандом)';
+      } else {
+        // Все аккаунты: показываем тип имени, а дальше одно поле ИЛИ 3 поля
+        nameModeGroup.parentElement.classList.remove('hidden');
+        if (useMulti) {
+          namesSingleWrap.classList.add('hidden');
+          namesMultiWrap.classList.remove('hidden');
+        } else {
+          namesSingleWrap.classList.remove('hidden');
+          namesMultiWrap.classList.add('hidden');
+        }
+        singleNameInput.placeholder = '4) Одно имя для первых 3 аккаунтов';
+      }
+
+      multiNameInputs.forEach((input) => {
+        input.disabled = !useMulti;
+        if (!useMulti) input.value = '';
+      });
+    }
+    targetInputs.forEach((el) => el.addEventListener('change', syncModes));
+    nameModeInputs.forEach((el) => el.addEventListener('change', syncModes));
+    syncModes();
+
+    customWaitText.value = localStorage.getItem('custom_wait_text') || '';
+    customModeText.value = localStorage.getItem('custom_mode_text') || '';
+    customWaitText.addEventListener('input', updateCustomPreview);
+    customModeText.addEventListener('input', updateCustomPreview);
+    updateCustomPreview();
   </script>
 </body>
 </html>

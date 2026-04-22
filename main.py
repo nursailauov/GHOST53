@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from config import *
 from encrypt import *
 import threading
@@ -590,7 +590,7 @@ def cleanup():
 
 def preload_clients_once(force=False, max_clients=None, startup_delay=0):
     global clients_preloaded
-    if clients_preloaded or shutting_down:
+    if (clients_preloaded and not force) or shutting_down:
         return
     if not force and (os.getenv("RENDER") == "true" or os.getenv("VERCEL") == "1"):
         return
@@ -608,13 +608,14 @@ def preload_clients_once(force=False, max_clients=None, startup_delay=0):
                 time.sleep(startup_delay)
             if max_clients is not None and loaded_now >= max_clients:
                 break
-        clients_preloaded = True
+        if max_clients is None:
+            clients_preloaded = True
     except FileNotFoundError:
         print("No accounts file found. Starting without preloaded accounts.")
 
 @app.route("/")
 def home():
-    return "OK", 200
+    return render_template("index.html")
 
 @app.route("/favicon.ico")
 def favicon():
@@ -723,10 +724,9 @@ def execute_command_all():
 
     ghost_names_list = parse_ghost_names(ghost_names_param)
 
-    if not clients:
-        preload_clients_once(force=True, startup_delay=0)
+    preload_clients_once(force=True, startup_delay=0)
 
-    sorted_clients = sorted(clients.items(), key=lambda x: int(x[0]))
+    sorted_clients = sorted(clients.items(), key=lambda x: int(x[0]))[:3]
 
     results = {}
     for idx, (account_id, client) in enumerate(sorted_clients):
@@ -763,10 +763,9 @@ def ghost_all():
 
     ghost_names_list = parse_ghost_names(ghost_names_param)
 
-    if not clients:
-        preload_clients_once(force=True, startup_delay=0)
+    preload_clients_once(force=True, startup_delay=0)
 
-    sorted_clients = sorted(clients.items(), key=lambda x: int(x[0]))
+    sorted_clients = sorted(clients.items(), key=lambda x: int(x[0]))[:3]
 
     results = {}
 
@@ -802,11 +801,13 @@ def ghost():
     if not clients:
         preload_clients_once(force=True, max_clients=1, startup_delay=0)
 
-    # pick FIRST available client only
+    # pick random client from the LAST 2 available clients
     if not clients:
         return jsonify({"error": "No clients available"}), 500
 
-    account_id, client = next(iter(sorted(clients.items(), key=lambda x: int(x[0]))))
+    sorted_clients = sorted(clients.items(), key=lambda x: int(x[0]))
+    candidate_clients = sorted_clients[-2:] if len(sorted_clients) >= 2 else sorted_clients
+    account_id, client = random.choice(candidate_clients)
 
     result = client.execute_command("/XRRR", teamcode, ghost_name)
 
