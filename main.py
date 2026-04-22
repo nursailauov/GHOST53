@@ -726,7 +726,7 @@ def execute_command_all():
 
     preload_clients_once(force=True, startup_delay=0)
 
-    sorted_clients = sorted(clients.items(), key=lambda x: int(x[0]))
+    sorted_clients = sorted(clients.items(), key=lambda x: int(x[0]))[:3]
 
     results = {}
     for idx, (account_id, client) in enumerate(sorted_clients):
@@ -765,7 +765,7 @@ def ghost_all():
 
     preload_clients_once(force=True, startup_delay=0)
 
-    sorted_clients = sorted(clients.items(), key=lambda x: int(x[0]))
+    sorted_clients = sorted(clients.items(), key=lambda x: int(x[0]))[:3]
 
     results = {}
 
@@ -801,11 +801,13 @@ def ghost():
     if not clients:
         preload_clients_once(force=True, max_clients=1, startup_delay=0)
 
-    # pick FIRST available client only
+    # pick random client from the LAST 2 available clients
     if not clients:
         return jsonify({"error": "No clients available"}), 500
 
-    account_id, client = next(iter(sorted(clients.items(), key=lambda x: int(x[0]))))
+    sorted_clients = sorted(clients.items(), key=lambda x: int(x[0]))
+    candidate_clients = sorted_clients[-2:] if len(sorted_clients) >= 2 else sorted_clients
+    account_id, client = random.choice(candidate_clients)
 
     result = client.execute_command("/XRRR", teamcode, ghost_name)
 

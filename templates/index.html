@@ -178,6 +178,14 @@
       grid-template-columns: repeat(3, 1fr);
       gap: 8px;
     }
+    .section-label {
+      margin: 0 0 6px;
+      color: var(--red);
+      font-size: .85rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+    }
 
     .status { min-height: 20px; margin-top: 10px; color: var(--muted); }
     .status.ok { color: var(--ok); font-weight: 700; text-shadow: 0 0 10px rgba(68, 244, 159, 0.25); }
@@ -366,7 +374,7 @@
         <input id="teamcode" type="text" placeholder="1) Введите TEAM CODE" required>
 
         <div>
-          <div style="margin:0 0 6px;color:var(--muted);font-size:.9rem;">2) Куда отправить</div>
+          <div class="section-label">2) Куда отправить</div>
           <div class="choice-group" id="targetGroup">
             <label class="choice active">
               <input type="radio" name="target_mode" value="single" checked>
@@ -380,7 +388,7 @@
         </div>
 
         <div>
-          <div style="margin:0 0 6px;color:var(--muted);font-size:.9rem;">3) Тип имени</div>
+          <div class="section-label">3) Тип имени</div>
           <div class="choice-group" id="nameModeGroup">
             <label class="choice active">
               <input type="radio" name="name_mode" value="single_name" checked>
@@ -397,11 +405,10 @@
           <input id="ghost_names_single" type="text" placeholder="4) Имя">
         </div>
         <div id="namesMultiWrap" class="name-row hidden">
-          <input id="ghost_name_1" type="text" placeholder="Имя #1">
-          <input id="ghost_name_2" type="text" placeholder="Имя #2">
-          <input id="ghost_name_3" type="text" placeholder="Имя #3">
+          <input id="ghost_name_1" type="text" placeholder="Имя #1 (1-й аккаунт)">
+          <input id="ghost_name_2" type="text" placeholder="Имя #2 (2-й аккаунт)">
+          <input id="ghost_name_3" type="text" placeholder="Имя #3 (3-й аккаунт)">
         </div>
-        <div id="nameHint" class="hint">Для одного аккаунта: одно имя. Для всех аккаунтов: можно дать каждому своё имя через запятую или с новой строки.</div>
         <button class="btn" type="submit">Отправить ghost</button>
       </form>
 
@@ -676,24 +683,15 @@
     const namesSingleWrap = document.getElementById('namesSingleWrap');
     const namesMultiWrap = document.getElementById('namesMultiWrap');
     const singleNameInput = document.getElementById('ghost_names_single');
-    const nameHint = document.getElementById('nameHint');
     function syncModes() {
       const mode = document.querySelector('input[name="target_mode"]:checked').value;
       const nameMode = document.querySelector('input[name="name_mode"]:checked').value;
       const disabled = mode === 'single';
-      nameModeGroup.style.opacity = disabled ? '0.55' : '1';
-      nameModeGroup.style.pointerEvents = disabled ? 'none' : 'auto';
+      nameModeGroup.parentElement.classList.toggle('hidden', disabled);
       const useMulti = !disabled && nameMode === 'multi_name';
-      namesSingleWrap.classList.toggle('hidden', useMulti);
-      namesMultiWrap.classList.toggle('hidden', !useMulti);
-      singleNameInput.placeholder = disabled
-        ? '4) Имя для 1 аккаунта'
-        : '4) Одно имя для всех аккаунтов';
-      nameHint.textContent = disabled
-        ? 'Будет использовано только одно имя для одного аккаунта.'
-        : (nameMode === 'single_name'
-          ? 'Одно имя будет применено ко всем аккаунтам.'
-          : 'Каждый аккаунт получит имя из полей #1, #2, #3 по порядку.');
+      namesSingleWrap.classList.toggle('hidden', useMulti ? true : false);
+      namesMultiWrap.classList.toggle('hidden', useMulti ? false : true);
+      singleNameInput.placeholder = disabled ? '4) Имя для 1 аккаунта (последние 2 аккаунта рандом)' : '4) Одно имя для первых 3 аккаунтов';
     }
     targetInputs.forEach((el) => el.addEventListener('change', syncModes));
     nameModeInputs.forEach((el) => el.addEventListener('change', syncModes));
