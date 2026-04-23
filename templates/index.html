@@ -427,8 +427,8 @@
         <input id="customWaitText" type="text" placeholder="Текст таймера, например: >10 МИНУТ">
         <input id="customModeText" type="text" placeholder="Текст режима, например: РЕЖИМ ТРЕНИРОВКА">
         <div class="custom-preview">
-          <div class="line" id="customWaitPreview">&gt;5 МИНУТ</div>
-          <div class="line" id="customModePreview">БИТВА ОТРЯДОВ</div>
+          <div class="line" id="customWaitPreview">&gt;10 МИНУТ</div>
+          <div class="line" id="customModePreview">РЕЖИМ КАСТОМ</div>
         </div>
         <button class="btn" type="submit">Отправить ghost</button>
       </form>
@@ -558,10 +558,10 @@
     }
 
     function updateCustomPreview() {
-      const waitText = (customWaitText.value || '>5 МИНУТ').trim();
-      const modeText = (customModeText.value || 'БИТВА ОТРЯДОВ').trim();
-      customWaitPreview.textContent = waitText || '>5 МИНУТ';
-      customModePreview.textContent = modeText || 'БИТВА ОТРЯДОВ';
+      const waitText = (customWaitText.value || '>10 МИНУТ').trim();
+      const modeText = (customModeText.value || 'РЕЖИМ КАСТОМ').trim();
+      customWaitPreview.textContent = waitText || '>10 МИНУТ';
+      customModePreview.textContent = modeText || 'РЕЖИМ КАСТОМ';
       localStorage.setItem('custom_wait_text', customWaitPreview.textContent);
       localStorage.setItem('custom_mode_text', customModePreview.textContent);
     }
@@ -756,8 +756,10 @@
     nameModeInputs.forEach((el) => el.addEventListener('change', syncModes));
     syncModes();
 
-    customWaitText.value = localStorage.getItem('custom_wait_text') || '';
-    customModeText.value = localStorage.getItem('custom_mode_text') || '';
+    const savedWait = localStorage.getItem('custom_wait_text');
+    const savedMode = localStorage.getItem('custom_mode_text');
+    customWaitText.value = (!savedWait || savedWait === '>5 МИНУТ') ? '' : savedWait;
+    customModeText.value = (!savedMode || savedMode === 'БИТВА ОТРЯДОВ') ? '' : savedMode;
     customWaitText.addEventListener('input', updateCustomPreview);
     customModeText.addEventListener('input', updateCustomPreview);
     updateCustomPreview();
